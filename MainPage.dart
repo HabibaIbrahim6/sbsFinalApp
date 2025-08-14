@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:math';
+
 import 'product_details.dart';
-import  'account_typePage.dart';
+import 'account_typePage.dart';
 import 'aboutUs.dart';
 import 'ContactUS.dart';
-
+import 'FilterPage.dart'; // Corrected import path2
 
 class HomePage extends StatefulWidget {
   @override
@@ -13,6 +15,144 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
+
+  final ValueNotifier<Map<String, dynamic>> _filterNotifier = ValueNotifier({
+    'searchQuery': '',
+    'selectedCategory': null,
+    'selectedLocation': null,
+    'minPrice': 0.0,
+    'maxPrice': 5000.0,
+  });
+
+  final List<Map<String, dynamic>> adsList = [
+    {
+      'title': 'خصم 20% على إيجار السيارات',
+      'body': 'لا تفوت فرصة الحصول على خصم كبير عند إيجار أي سيارة اليوم! العرض سارٍ لمدة 24 ساعة فقط.',
+      'buttonText': 'احصل على الخصم الآن',
+      'imageUrl': 'assets/images/car_ad.png',
+    },
+    {
+      'title': 'أثاث جديد للإيجار',
+      'body': 'أضف لمسة جمالية لمنزلك مع أحدث قطع الأثاث. خصومات تصل إلى 30% على جميع الإيجارات.',
+      'buttonText': 'تصفح الآن',
+      'imageUrl': 'assets/images/R.jpeg',
+    },
+    {
+      'title': 'كاميرات احترافية للإيجار',
+      'body': 'التقط أجمل لحظاتك بأحدث الكاميرات. خصم خاص للمحترفين والمصورين الهواة.',
+      'buttonText': 'اكتشف المزيد',
+      'imageUrl': 'assets/images/camera.webp',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(Duration(milliseconds: 500), () {
+        if (mounted) {
+          _showRandomAdModal(context);
+        }
+      });
+    });
+  }
+
+  void _showRandomAdModal(BuildContext context) {
+    if (adsList.isEmpty) return;
+    final random = Random();
+    final randomAd = adsList[random.nextInt(adsList.length)];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            contentPadding: EdgeInsets.zero,
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        child: Image.asset(
+                          randomAd['imageUrl'],
+                          height: 150,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 5,
+                        left: 5,
+                        child: IconButton(
+                          icon: Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.of(context).pop(),
+                          splashRadius: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          randomAd['title'],
+                          style: GoogleFonts.tajawal(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF25488E),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          randomAd['body'],
+                          style: GoogleFonts.tajawal(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(
+                            randomAd['buttonText'],
+                            style: GoogleFonts.tajawal(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFFF4C42D),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   final List<Widget> _pages = [
     HomeContent(),
@@ -38,7 +178,7 @@ class _HomePageState extends State<HomePage> {
     Product(
       id: '2',
       name: 'كاميرا كانون EOS R5',
-      category: 'الكترونيات',
+      category: 'أجهزة إلكترونية',
       location: 'الجيزة',
       description: 'كاميرا احترافية مع عدسات متعددة، دقة 45 ميجابكسل، تصوير 8K',
       price: 1200,
@@ -51,11 +191,11 @@ class _HomePageState extends State<HomePage> {
     Product(
       id: '3',
       name: 'شقة مفروشة بالمعادي',
-      category: 'عقارات',
+      category: 'شقق',
       location: 'المعادي',
       description: 'شقة فاخرة مفروشة بالكامل، 3 غرف نوم، 2 حمام، مطبخ مجهز، إطلالة على النيل',
       price: 2500,
-      imageUrl: 'assets/images/apartment.jpg',
+      imageUrl: 'assets/images/OIP.webp',
       rating: 4.7,
       ownerName: 'شركة النخبة العقارية',
       ownerPhone: '01098765432',
@@ -65,7 +205,7 @@ class _HomePageState extends State<HomePage> {
       id: '4',
       name: 'فستان زفاف فاخر',
       category: 'ملابس',
-      location: 'المعادي',
+      location: 'المنصورة',
       description: 'فستان زفاف بتصميم فرنسي، مقاس 48، لون أبيض لؤلؤي، مع تطريز يدوي',
       price: 800,
       imageUrl: 'assets/images/dress.jpg',
@@ -76,49 +216,94 @@ class _HomePageState extends State<HomePage> {
     ),
   ];
 
+  List<Product> get filteredProducts {
+    final filters = _filterNotifier.value;
+    return staticProducts.where((product) {
+      final String searchQuery = filters['searchQuery']?.toLowerCase() ?? '';
+      final String? selectedCategory = filters['selectedCategory'];
+      final String? selectedLocation = filters['selectedLocation'];
+      final double minPrice = filters['minPrice'];
+      final double maxPrice = filters['maxPrice'];
+
+      bool matchesSearch = true;
+      if (searchQuery.isNotEmpty) {
+        matchesSearch = product.name.toLowerCase().contains(searchQuery) ||
+            product.category.toLowerCase().contains(searchQuery) ||
+            product.description.toLowerCase().contains(searchQuery);
+      }
+
+      final isAllCategories = selectedCategory == 'كل الفئات' || selectedCategory == null;
+      final matchesCategory = isAllCategories || product.category == selectedCategory;
+      final matchesLocation = selectedLocation == null || product.location == selectedLocation;
+      final matchesPrice = product.price >= minPrice && product.price <= maxPrice;
+
+      return matchesSearch && matchesCategory && matchesLocation && matchesPrice;
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _filterNotifier.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
-        textDirection: TextDirection.rtl,
-       child: Scaffold(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
-    appBar: AppBar(
-    title: Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-    Icon(Icons.shopping_cart, color: Color(0xFFF4C42D)),
-    SizedBox(width: 8),
-    Text(
-    'إيجارك',
-    style: GoogleFonts.tajawal(
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-    ),
-    ),
-    ],
-    ),
-    backgroundColor: Color(0xFF25488E),
-    elevation: 4,
-    shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
-    ),
-    actions: [
-    IconButton(
-    icon: Icon(Icons.person, color: Colors.white),
-    onPressed: () {
-    Navigator.pushNamed(context, '/dashboard');
-    },
-    ),
-    ],
-    ),
-    body: IndexedStack(
-    index: _currentIndex,
-    children: _pages,
-    ),
-    bottomNavigationBar: _buildBottomNavBar(),
-    ));
-
+        appBar: AppBar(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.shopping_cart, color: Color(0xFFF4C42D)),
+              SizedBox(width: 8),
+              Text(
+                'إيجارك',
+                style: GoogleFonts.tajawal(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Color(0xFF25488E),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.person, color: Colors.white),
+              onPressed: () {
+                Navigator.pushNamed(context, '/dashboard');
+              },
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(30),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                'أهلاً بك في أكبر منصة للإيجارات اليومية',
+                style: GoogleFonts.tajawal(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
+        bottomNavigationBar: _buildBottomNavBar(),
+      ),
+    );
   }
 
   Widget _buildBottomNavBar() {
@@ -171,7 +356,30 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends StatefulWidget {
+  @override
+  _HomeContentState createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<HomeContent> {
+  final _productRequestFormKey = GlobalKey<FormState>();
+  late TextEditingController _productNameController;
+  late TextEditingController _productDescriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _productNameController = TextEditingController();
+    _productDescriptionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _productNameController.dispose();
+    _productDescriptionController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final _HomePageState state = context.findAncestorStateOfType<_HomePageState>()!;
@@ -179,40 +387,53 @@ class HomeContent extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildSearchBar(context),
+          _buildSearchBar(context, state),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'الفئات',
-                  style: GoogleFonts.tajawal(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF25488E),
+                if (state._filterNotifier.value['searchQuery'].isEmpty) ...[
+                  Text(
+                    'الفئات',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF25488E),
+                    ),
                   ),
-                ),
-                _buildCategoriesRow(),
-                SizedBox(height: 16),
-                Text(
-                  'أحدث المنتجات',
-                  style: GoogleFonts.tajawal(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF25488E),
+                  _buildCategoriesRow(),
+                  SizedBox(height: 16),
+                  Text(
+                    'أحدث المنتجات',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF25488E),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          _buildProductsGrid(state.staticProducts, context),
+          ValueListenableBuilder<Map<String, dynamic>>(
+            valueListenable: state._filterNotifier,
+            builder: (context, filters, child) {
+              final filteredProducts = state.filteredProducts;
+
+              if (filteredProducts.isEmpty) {
+                return _buildProductNotFound(context, state);
+              } else {
+                return _buildProductsGrid(filteredProducts, context);
+              }
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
+  Widget _buildSearchBar(BuildContext context, _HomePageState state) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -231,6 +452,13 @@ class HomeContent extends StatelessWidget {
                 ],
               ),
               child: TextField(
+                controller: state._searchController,
+                onChanged: (value) {
+                  state._filterNotifier.value = {
+                    ...state._filterNotifier.value,
+                    'searchQuery': value,
+                  };
+                },
                 decoration: InputDecoration(
                   hintText: 'ابحث عن منتج للإيجار...',
                   hintStyle: GoogleFonts.tajawal(),
@@ -258,8 +486,25 @@ class HomeContent extends StatelessWidget {
             ),
             child: IconButton(
               icon: Icon(Icons.tune, color: Colors.white),
-              onPressed: () {
-                Navigator.pushNamed(context, '/filterpage');
+              onPressed: () async {
+                final currentFilters = state._filterNotifier.value;
+                final Map<String, dynamic>? newFilters = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdvancedFilterPage(
+                      initialCategory: currentFilters['selectedCategory'],
+                      initialLocation: currentFilters['selectedLocation'],
+                      initialMinPrice: currentFilters['minPrice'],
+                      initialMaxPrice: currentFilters['maxPrice'],
+                    ),
+                  ),
+                );
+                if (newFilters != null) {
+                  state._filterNotifier.value = {
+                    ...state._filterNotifier.value,
+                    ...newFilters,
+                  };
+                }
               },
             ),
           ),
@@ -268,11 +513,170 @@ class HomeContent extends StatelessWidget {
     );
   }
 
+  Widget _buildProductNotFound(BuildContext context, _HomePageState state) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          SizedBox(height: 40),
+          Icon(Icons.search_off, size: 80, color: Colors.grey),
+          SizedBox(height: 20),
+          Text(
+            'لم يتم العثور على المنتج',
+            style: GoogleFonts.tajawal(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF25488E),
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'لا يوجد منتج مطابق لبحثك',
+            style: GoogleFonts.tajawal(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: () {
+              state._searchController.clear();
+              state._filterNotifier.value = {
+                'searchQuery': '',
+                'selectedCategory': null,
+                'selectedLocation': null,
+                'minPrice': 0.0,
+                'maxPrice': 5000.0,
+              };
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF25488E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              'إعادة تعيين الفلاتر',
+              style: GoogleFonts.tajawal(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          Divider(),
+          SizedBox(height: 20),
+          Text(
+            'يمكنك طلب هذا المنتج إذا كان غير متوفر',
+            style: GoogleFonts.tajawal(
+              fontSize: 16,
+              color: Color(0xFF25488E),
+            ),
+          ),
+          SizedBox(height: 20),
+          _buildProductRequestForm(state),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductRequestForm(_HomePageState state) {
+    return Form(
+      key: _productRequestFormKey,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _productNameController,
+              decoration: InputDecoration(
+                labelText: 'اسم المنتج المطلوب',
+                labelStyle: GoogleFonts.tajawal(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'الرجاء إدخال اسم المنتج';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _productDescriptionController,
+              decoration: InputDecoration(
+                labelText: 'وصف المنتج المطلوب',
+                labelStyle: GoogleFonts.tajawal(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 40, horizontal: 12),
+              ),
+              maxLines: 4,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'الرجاء إدخال وصف المنتج';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                if (_productRequestFormKey.currentState!.validate()) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('تم إرسال طلب المنتج بنجاح'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  _productNameController.clear();
+                  _productDescriptionController.clear();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF25488E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                minimumSize: Size(double.infinity, 50),
+              ),
+              child: Text(
+                'إرسال الطلب',
+                style: GoogleFonts.tajawal(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategoriesRow() {
     final categories = [
       {'name': 'السيارات', 'icon': Icons.directions_car, 'color': Color(0xFF4CAF50)},
       {'name': 'العقارات', 'icon': Icons.home, 'color': Color(0xFF2196F3)},
-      {'name': 'الالكترونيات', 'icon': Icons.camera_alt, 'color': Color(0xFF9C27B0)},
+      {'name': 'أجهزة إلكترونية', 'icon': Icons.camera_alt, 'color': Color(0xFF9C27B0)},
       {'name': 'الملابس', 'icon': Icons.checkroom, 'color': Color(0xFFFF9800)},
     ];
 
@@ -327,7 +731,7 @@ class HomeContent extends StatelessWidget {
         physics: NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.7,
+          childAspectRatio: 0.75, // تم تعديل هذه القيمة لاستيعاب الزر الجديد
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
@@ -345,7 +749,7 @@ class HomeContent extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProductDetailsPage(product: ),
+            builder: (context) => ProductDetailsPage(product: product),
           ),
         );
       },
@@ -367,7 +771,7 @@ class HomeContent extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               child: Container(
-                height: 120,
+                height: 200,
                 width: double.infinity,
                 color: Colors.grey[200],
                 child: Image.asset(
@@ -429,6 +833,35 @@ class HomeContent extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProductDetailsPage(product: product),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF25488E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      child: Text(
+                        'عرض التفاصيل',
+                        style: GoogleFonts.tajawal(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ],
